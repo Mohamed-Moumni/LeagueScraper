@@ -70,6 +70,7 @@ class MatchLineupScraper:
             sofa_score_domain = [
                 cookie for cookie in cookies if cookie.domain == "www.sofascore.com"
             ]
+            self.cookies = sofa_score_domain
         return sofa_score_domain
 
     async def get_match_lineup(self, id: int):
@@ -92,16 +93,3 @@ class MatchLineupScraper:
         tab = await self.browser.get(lineup_url)
         lineup = await tab.evaluate("JSON.parse(document.body.innerText)")
         return lineup
-
-
-async def main():
-    scraper = MatchLineupScraper()
-    await scraper.start_browser()
-    event_id = await scraper.get_match_event_id("olympic-safi", "wydad-casablanca")
-    if event_id:
-        lineup = await scraper.get_match_lineup(event_id)
-        print(lineup)
-    await scraper.stop_browser()
-
-if __name__ == "__main__":
-    asyncio.run(main())
