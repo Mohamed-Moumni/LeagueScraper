@@ -1,8 +1,11 @@
 from typing import Any, Dict, List, Optional
+import logging
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from app.services.matches.match_scraper_service import MatchLineupScraper
 from fastapi import HTTPException, WebSocketException
+
+logger = logging.getLogger(__name__)
 
 
 # Schema for the match request
@@ -44,16 +47,13 @@ class Player(BaseModel):
     proposedMarketValueRaw: Optional[MarketValue] = None
     fieldTranslations: Optional[FieldTranslations] = None
 
-
 class RatingVersions(BaseModel):
     original: Optional[float] = None
     alternative: Optional[float] = None
 
-
 class StatisticsType(BaseModel):
     sportSlug: Optional[str] = None
     statisticsType: Optional[str] = None
-
 
 class PlayerStatistics(BaseModel):
     totalPass: Optional[int] = None
@@ -110,8 +110,7 @@ class PlayerStatistics(BaseModel):
     ratingVersions: Optional[RatingVersions] = None
     statisticsType: Optional[StatisticsType] = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class PlayerEntry(BaseModel):
@@ -155,18 +154,63 @@ router = APIRouter()
 
 
 @router.post("/match/lineup", response_model=MatchResponse)
-async def match_lineup():
+async def match_lineup(request: MatchRequest):
+    """
+    Get match lineup for the specified teams.
+    
+    Args:
+        request: MatchRequest containing team1 and team2 slugs
+        
+    Returns:
+        MatchResponse with lineup data
+        
+    Raises:
+        HTTPException: If browser fails to start, event not found, or lineup not found
+    """
     scraper = MatchLineupScraper()
-    await scraper.start_browser()
-    event_id = await scraper.get_match_event_id("olympic-safi", "wydad-casablanca")
-    lineup = None
-    if event_id:
-        lineup = await scraper.get_match_lineup(event_id)
-    await scraper.stop_browser()
-
-    # Handle None case
-    if lineup is None:
-        raise HTTPException(status_code=404, detail="Lineup not found")
-
-    # Pydantic will automatically convert the dict to LineupData
-    return MatchResponse(lineup=lineup)
+    browser_started = False
+    
+    try:
+        # Start browser
+        await scraper.start_browser()
+        browser_started = True
+        
+        # Get match event ID using team names from request
+        event_id = await scraper.get_match_event_id(request.team1, request.team2)
+        
+        if not event_id:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Match not found for teams: {request.team1} vs {request.team2}"
+            )
+        
+        # Get match lineup
+        lineup_data = await scraper.get_match_lineup(event_id)
+        
+        if lineup_data is None:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Lineup not found for match: {request.team1} vs {request.team2}"
+            )
+        
+        # Pydantic will automatically convert the dict to LineupData
+        # Type ignore needed because scraper returns Any from evaluate()
+        return MatchResponse(lineup=lineup_data)  # type: ignore
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        # Handle unexpected errors
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error fetching lineup: {str(e)}"
+        )
+    finally:
+        # Ensure browser is always stopped, even if an error occurs
+        if browser_started:
+            try:
+                await scraper.stop_browser()
+            except Exception as e:
+                # Log browser stop errors but don't fail the request
+                logger.error(f"Error stopping browser: {str(e)}")
