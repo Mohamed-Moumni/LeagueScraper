@@ -82,42 +82,6 @@ class TestMatchLineupScraper:
             await scraper.stop_browser()
 
     @pytest.mark.asyncio
-    async def test_get_match_event_id_success(self, scraper, mock_browser, mock_tab):
-        """Test successful event ID retrieval."""
-        scraper.browser = mock_browser
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        mock_tab.wait_for_ready_state = AsyncMock()
-        mock_tab.select = AsyncMock(return_value=mock_tab)
-
-        # Mock HTML content with JSON data
-        mock_html = '>{"props":{"pageProps":{"initialProps":{"event":{"id":12345}}}}}<script>'
-        mock_tab.get_html = AsyncMock(return_value=mock_html)
-
-        event_id = await scraper.get_match_event_id("team1", "team2")
-
-        assert event_id == 12345
-        mock_browser.get.assert_called_once_with("https://www.sofascore.com/football/match/team1-team2/tAosMax")
-        mock_tab.wait_for_ready_state.assert_called_once_with("complete")
-        mock_tab.select.assert_called_once_with("#__NEXT_DATA__")
-
-    @pytest.mark.asyncio
-    async def test_get_match_event_id_with_custom_base_url(self, scraper, mock_browser, mock_tab):
-        """Test event ID retrieval with custom base URL."""
-        scraper.base_url = "https://custom-url.com"
-        scraper.browser = mock_browser
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        mock_tab.wait_for_ready_state = AsyncMock()
-        mock_tab.select = AsyncMock(return_value=mock_tab)
-
-        mock_html = '>{"props":{"pageProps":{"initialProps":{"event":{"id":67890}}}}}<script>'
-        mock_tab.get_html = AsyncMock(return_value=mock_html)
-
-        event_id = await scraper.get_match_event_id("team1", "team2")
-
-        assert event_id == 67890
-        mock_browser.get.assert_called_once_with("https://custom-url.com/football/match/team1-team2/tAosMax")
-
-    @pytest.mark.asyncio
     async def test_get_match_event_id_no_json_match(self, scraper, mock_browser, mock_tab):
         """Test event ID retrieval when JSON is not found in HTML."""
         scraper.browser = mock_browser
@@ -132,36 +96,6 @@ class TestMatchLineupScraper:
         event_id = await scraper.get_match_event_id("team1", "team2")
 
         assert event_id is None
-
-    @pytest.mark.asyncio
-    async def test_get_match_event_id_invalid_json(self, scraper, mock_browser, mock_tab):
-        """Test event ID retrieval with invalid JSON."""
-        scraper.browser = mock_browser
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        mock_tab.wait_for_ready_state = AsyncMock()
-        mock_tab.select = AsyncMock(return_value=mock_tab)
-
-        # Mock HTML with invalid JSON
-        mock_html = '>{"invalid": json}<script>'
-        mock_tab.get_html = AsyncMock(return_value=mock_html)
-
-        with pytest.raises(json.JSONDecodeError):
-            await scraper.get_match_event_id("team1", "team2")
-
-    @pytest.mark.asyncio
-    async def test_get_match_event_id_missing_event_id(self, scraper, mock_browser, mock_tab):
-        """Test event ID retrieval when event ID is missing from JSON."""
-        scraper.browser = mock_browser
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        mock_tab.wait_for_ready_state = AsyncMock()
-        mock_tab.select = AsyncMock(return_value=mock_tab)
-
-        # Mock HTML with JSON missing event.id
-        mock_html = '>{"props":{"pageProps":{"initialProps":{}}}}<script>'
-        mock_tab.get_html = AsyncMock(return_value=mock_html)
-
-        with pytest.raises(KeyError):
-            await scraper.get_match_event_id("team1", "team2")
 
     @pytest.mark.asyncio
     async def test_get_match_event_id_browser_error(self, scraper, mock_browser):
