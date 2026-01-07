@@ -36,7 +36,7 @@ class Player(BaseModel):
     slug: str
     shortName: str
     position: str
-    jerseyNumber: str
+    jerseyNumber: Optional[str] = None
     height: Optional[int] = None
     userCount: int
     gender: Optional[str] = None
@@ -186,6 +186,7 @@ async def match_lineup(request: MatchRequest):
         
         # Get match lineup
         lineup_data = await scraper.get_match_lineup(event_id)
+        
         
         if lineup_data is None:
             raise HTTPException(
