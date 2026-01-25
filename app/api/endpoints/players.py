@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from app.services.matches.players_service import PlayersService
 from app.api.models.player import Player, PlayerListResponse
 
-logger = logging.getLogger(__name__)
+from app import logger
 
 router = APIRouter()
 

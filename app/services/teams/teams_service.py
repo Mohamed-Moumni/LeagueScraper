@@ -9,7 +9,7 @@ from  ..scraper  import Scraper, logger
 class TeamsScraper(Scraper):
     
     async def get_teams(self, league_id:int, season_id:int):
-        URL:str = self.base_url + f"/api/v1/unique-tournament/{league_id}/season/{season_id}/standings/total"
+        URL:str = self.base_url + f"/api/v1/tournament/{league_id}/season/{season_id}/standings/total"
             
         try:
             teams_data = await self.get_api_response(URL)

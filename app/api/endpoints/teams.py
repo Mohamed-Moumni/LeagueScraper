@@ -1,13 +1,9 @@
 from typing import List, Optional
-import logging
 from pydantic import BaseModel, ConfigDict
 from app.api.endpoints.match_lineup import router
 from fastapi import HTTPException, Path
-
 from app.services.teams.teams_service import TeamsScraper
-
-logger = logging.getLogger(__name__)
-
+from app import logger
 # Schema for teams validation
 class Country(BaseModel):
     alpha2: Optional[str] = None
