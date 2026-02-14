@@ -14,12 +14,9 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
             
-            - name: Echo environment variable
-              run: echo "My environment variable is $DOCKERHUB_USERNAME"
-            
             - name: Debug check Docker login
               env:
-                DOCKERHUB_USERNAME: ${{ env.DOCKERHUB_USERNAME }}
+                DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
               run: |
                 if [ -z "$DOCKERHUB_USERNAME" ]; then
                   echo "DOCKERHUB_USERNAME is empty"
