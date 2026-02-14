@@ -1,9 +1,7 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi import HTTPException
+from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from app.main import app
-from app.api.endpoints.match_lineup import MatchResponse, LineupData, TeamLineup, PlayerEntry, Player
 
 
 class TestMatchLineupAPI:
@@ -17,10 +15,7 @@ class TestMatchLineupAPI:
     @pytest.fixture
     def match_request_payload(self):
         """Create a match request payload."""
-        return {
-            "team1": "olympic-safi",
-            "team2": "wydad-casablanca"
-        }
+        return {"team1": "olympic-safi", "team2": "wydad-casablanca"}
 
     @pytest.fixture
     def mock_lineup_data(self):
@@ -44,18 +39,18 @@ class TestMatchLineupAPI:
                                 "alpha2": "US",
                                 "alpha3": "USA",
                                 "name": "United States",
-                                "slug": "united-states"
+                                "slug": "united-states",
                             },
                             "marketValueCurrency": "USD",
                             "dateOfBirthTimestamp": 631152000,
                             "proposedMarketValueRaw": {
                                 "value": 5000000,
-                                "currency": "USD"
+                                "currency": "USD",
                             },
                             "fieldTranslations": {
                                 "nameTranslation": {"en": "John Doe"},
-                                "shortNameTranslation": {"en": "J. Doe"}
-                            }
+                                "shortNameTranslation": {"en": "J. Doe"},
+                            },
                         },
                         "teamId": 1,
                         "shirtNumber": 10,
@@ -68,8 +63,8 @@ class TestMatchLineupAPI:
                             "minutesPlayed": 90,
                             "rating": 7.5,
                             "totalPass": 45,
-                            "accuratePass": 38
-                        }
+                            "accuratePass": 38,
+                        },
                     }
                 ],
                 "supportStaff": [],
@@ -78,14 +73,14 @@ class TestMatchLineupAPI:
                     "primary": "#FF0000",
                     "number": "#FFFFFF",
                     "outline": "#000000",
-                    "fancyNumber": "#FFFFFF"
+                    "fancyNumber": "#FFFFFF",
                 },
                 "goalkeeperColor": {
                     "primary": "#FF0000",
                     "number": "#FFFFFF",
                     "outline": "#000000",
-                    "fancyNumber": "#FFFFFF"
-                }
+                    "fancyNumber": "#FFFFFF",
+                },
             },
             "away": {
                 "players": [
@@ -104,14 +99,14 @@ class TestMatchLineupAPI:
                                 "alpha2": "GB",
                                 "alpha3": "GBR",
                                 "name": "United Kingdom",
-                                "slug": "united-kingdom"
+                                "slug": "united-kingdom",
                             },
                             "marketValueCurrency": "GBP",
                             "dateOfBirthTimestamp": 662688000,
                             "proposedMarketValueRaw": {
                                 "value": 3000000,
-                                "currency": "GBP"
-                            }
+                                "currency": "GBP",
+                            },
                         },
                         "teamId": 2,
                         "shirtNumber": 8,
@@ -124,8 +119,8 @@ class TestMatchLineupAPI:
                             "minutesPlayed": 90,
                             "rating": 7.0,
                             "totalPass": 60,
-                            "accuratePass": 55
-                        }
+                            "accuratePass": 55,
+                        },
                     }
                 ],
                 "supportStaff": [],
@@ -134,20 +129,22 @@ class TestMatchLineupAPI:
                     "primary": "#0000FF",
                     "number": "#FFFFFF",
                     "outline": "#000000",
-                    "fancyNumber": "#FFFFFF"
+                    "fancyNumber": "#FFFFFF",
                 },
                 "goalkeeperColor": {
                     "primary": "#0000FF",
                     "number": "#FFFFFF",
                     "outline": "#000000",
-                    "fancyNumber": "#FFFFFF"
-                }
+                    "fancyNumber": "#FFFFFF",
+                },
             },
-            "statisticalVersion": 1
+            "statisticalVersion": 1,
         }
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_success(self, mock_scraper_class, client, mock_lineup_data, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_success(
+        self, mock_scraper_class, client, mock_lineup_data, match_request_payload
+    ):
         """Test successful match lineup retrieval."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
@@ -158,7 +155,9 @@ class TestMatchLineupAPI:
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions
         assert response.status_code == 200
@@ -172,12 +171,16 @@ class TestMatchLineupAPI:
 
         # Verify scraper methods were called
         mock_scraper.start_browser.assert_called_once()
-        mock_scraper.get_match_event_id.assert_called_once_with("olympic-safi", "wydad-casablanca")
+        mock_scraper.get_match_event_id.assert_called_once_with(
+            "olympic-safi", "wydad-casablanca"
+        )
         mock_scraper.get_match_lineup.assert_called_once_with(12345)
         mock_scraper.stop_browser.assert_called_once()
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_not_found_when_event_id_is_none(self, mock_scraper_class, client, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_not_found_when_event_id_is_none(
+        self, mock_scraper_class, client, match_request_payload
+    ):
         """Test 404 response when event_id is None."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
@@ -187,7 +190,9 @@ class TestMatchLineupAPI:
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions
         assert response.status_code == 404
@@ -197,12 +202,16 @@ class TestMatchLineupAPI:
 
         # Verify scraper methods were called
         mock_scraper.start_browser.assert_called_once()
-        mock_scraper.get_match_event_id.assert_called_once_with("olympic-safi", "wydad-casablanca")
+        mock_scraper.get_match_event_id.assert_called_once_with(
+            "olympic-safi", "wydad-casablanca"
+        )
         mock_scraper.get_match_lineup.assert_not_called()
         mock_scraper.stop_browser.assert_called_once()
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_not_found_when_lineup_is_none(self, mock_scraper_class, client, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_not_found_when_lineup_is_none(
+        self, mock_scraper_class, client, match_request_payload
+    ):
         """Test 404 response when lineup is None."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
@@ -213,7 +222,9 @@ class TestMatchLineupAPI:
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions
         assert response.status_code == 404
@@ -221,61 +232,83 @@ class TestMatchLineupAPI:
 
         # Verify scraper methods were called
         mock_scraper.start_browser.assert_called_once()
-        mock_scraper.get_match_event_id.assert_called_once_with("olympic-safi", "wydad-casablanca")
+        mock_scraper.get_match_event_id.assert_called_once_with(
+            "olympic-safi", "wydad-casablanca"
+        )
         mock_scraper.get_match_lineup.assert_called_once_with(12345)
         mock_scraper.stop_browser.assert_called_once()
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_browser_start_error(self, mock_scraper_class, client, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_browser_start_error(
+        self, mock_scraper_class, client, match_request_payload
+    ):
         """Test handling of browser start errors."""
         # Setup mock scraper to raise an exception
         mock_scraper = AsyncMock()
-        mock_scraper.start_browser = AsyncMock(side_effect=Exception("Browser start failed"))
+        mock_scraper.start_browser = AsyncMock(
+            side_effect=Exception("Browser start failed")
+        )
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions - should return 500 or propagate error
         assert response.status_code >= 400
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_get_event_id_error(self, mock_scraper_class, client, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_get_event_id_error(
+        self, mock_scraper_class, client, match_request_payload
+    ):
         """Test handling of get_match_event_id errors."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
         mock_scraper.start_browser = AsyncMock()
-        mock_scraper.get_match_event_id = AsyncMock(side_effect=Exception("Failed to get event ID"))
+        mock_scraper.get_match_event_id = AsyncMock(
+            side_effect=Exception("Failed to get event ID")
+        )
         mock_scraper.stop_browser = AsyncMock()
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions - should return 500 or propagate error
         assert response.status_code >= 400
         mock_scraper.stop_browser.assert_called_once()
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_get_lineup_error(self, mock_scraper_class, client, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_get_lineup_error(
+        self, mock_scraper_class, client, match_request_payload
+    ):
         """Test handling of get_match_lineup errors."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
         mock_scraper.start_browser = AsyncMock()
         mock_scraper.get_match_event_id = AsyncMock(return_value=12345)
-        mock_scraper.get_match_lineup = AsyncMock(side_effect=Exception("Failed to get lineup"))
+        mock_scraper.get_match_lineup = AsyncMock(
+            side_effect=Exception("Failed to get lineup")
+        )
         mock_scraper.stop_browser = AsyncMock()
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions - should return 500 or propagate error
         assert response.status_code >= 400
         mock_scraper.stop_browser.assert_called_once()
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_empty_lineup_data(self, mock_scraper_class, client, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_empty_lineup_data(
+        self, mock_scraper_class, client, match_request_payload
+    ):
         """Test handling of empty lineup data."""
         empty_lineup = {
             "confirmed": False,
@@ -284,16 +317,16 @@ class TestMatchLineupAPI:
                 "supportStaff": [],
                 "formation": None,
                 "playerColor": None,
-                "goalkeeperColor": None
+                "goalkeeperColor": None,
             },
             "away": {
                 "players": [],
                 "supportStaff": [],
                 "formation": None,
                 "playerColor": None,
-                "goalkeeperColor": None
+                "goalkeeperColor": None,
             },
-            "statisticalVersion": None
+            "statisticalVersion": None,
         }
 
         # Setup mock scraper
@@ -305,7 +338,9 @@ class TestMatchLineupAPI:
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions
         assert response.status_code == 200
@@ -314,8 +349,10 @@ class TestMatchLineupAPI:
         assert len(data["lineup"]["home"]["players"]) == 0
         assert len(data["lineup"]["away"]["players"]) == 0
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_browser_cleanup_on_error(self, mock_scraper_class, client, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_browser_cleanup_on_error(
+        self, mock_scraper_class, client, match_request_payload
+    ):
         """Test that browser is properly cleaned up even when errors occur."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
@@ -325,15 +362,19 @@ class TestMatchLineupAPI:
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Verify browser cleanup was attempted in finally block
         assert response.status_code == 500
         mock_scraper.start_browser.assert_called_once()
         mock_scraper.stop_browser.assert_called_once()
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_response_model_validation(self, mock_scraper_class, client, mock_lineup_data, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_response_model_validation(
+        self, mock_scraper_class, client, mock_lineup_data, match_request_payload
+    ):
         """Test that response conforms to MatchResponse model."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
@@ -344,12 +385,14 @@ class TestMatchLineupAPI:
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions
         assert response.status_code == 200
         data = response.json()
-        
+
         # Validate response structure matches MatchResponse model
         assert "lineup" in data
         lineup = data["lineup"]
@@ -360,8 +403,10 @@ class TestMatchLineupAPI:
         assert isinstance(lineup["home"]["players"], list)
         assert isinstance(lineup["away"]["players"], list)
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_with_statistics(self, mock_scraper_class, client, mock_lineup_data, match_request_payload):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_with_statistics(
+        self, mock_scraper_class, client, mock_lineup_data, match_request_payload
+    ):
         """Test lineup response includes player statistics."""
         # Setup mock scraper
         mock_scraper = AsyncMock()
@@ -372,12 +417,14 @@ class TestMatchLineupAPI:
         mock_scraper_class.return_value = mock_scraper
 
         # Make request
-        response = client.post("/api/v1/football/match/lineup", json=match_request_payload)
+        response = client.post(
+            "/api/v1/football/match/lineup", json=match_request_payload
+        )
 
         # Assertions
         assert response.status_code == 200
         data = response.json()
-        
+
         # Check that statistics are included
         home_player = data["lineup"]["home"]["players"][0]
         assert "statistics" in home_player
@@ -388,7 +435,7 @@ class TestMatchLineupAPI:
     def test_match_lineup_missing_payload(self, client):
         """Test that missing request payload returns validation error."""
         response = client.post("/api/v1/football/match/lineup")
-        
+
         assert response.status_code == 422  # Validation error
         assert "detail" in response.json()
 
@@ -396,18 +443,17 @@ class TestMatchLineupAPI:
         """Test that invalid request payload returns validation error."""
         invalid_payload = {"team1": "team1"}  # Missing team2
         response = client.post("/api/v1/football/match/lineup", json=invalid_payload)
-        
+
         assert response.status_code == 422  # Validation error
         assert "detail" in response.json()
 
-    @patch('app.api.endpoints.match_lineup.MatchLineupScraper')
-    def test_match_lineup_custom_teams(self, mock_scraper_class, client, mock_lineup_data):
+    @patch("app.api.endpoints.match_lineup.MatchLineupScraper")
+    def test_match_lineup_custom_teams(
+        self, mock_scraper_class, client, mock_lineup_data
+    ):
         """Test lineup retrieval with custom team names."""
-        custom_payload = {
-            "team1": "real-madrid",
-            "team2": "barcelona"
-        }
-        
+        custom_payload = {"team1": "real-madrid", "team2": "barcelona"}
+
         # Setup mock scraper
         mock_scraper = AsyncMock()
         mock_scraper.start_browser = AsyncMock()
@@ -425,6 +471,7 @@ class TestMatchLineupAPI:
         assert "lineup" in data
 
         # Verify scraper methods were called with custom team names
-        mock_scraper.get_match_event_id.assert_called_once_with("real-madrid", "barcelona")
+        mock_scraper.get_match_event_id.assert_called_once_with(
+            "real-madrid", "barcelona"
+        )
         mock_scraper.get_match_lineup.assert_called_once_with(99999)
-

@@ -87,6 +87,7 @@ class Team(BaseModel):
 
 class Player(BaseModel):
     """Player model matching API response fields."""
+
     id: int
     name: str
     slug: str
@@ -113,16 +114,19 @@ class Player(BaseModel):
 
 class PlayerResponse(BaseModel):
     """API response wrapper for single player."""
+
     player: Player
 
 
 class PlayerRequest(BaseModel):
     """Request model for player lookup."""
+
     team_slug: str
     team_id: int
 
 
 class PlayerListResponse(BaseModel):
     """Response model for list of players."""
+
     players: List[Player]
     total: int

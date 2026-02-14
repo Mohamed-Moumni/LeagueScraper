@@ -1,4 +1,3 @@
-import json
 import zendriver as zd
 import logging
 import os
@@ -31,7 +30,8 @@ class Scraper:
         self.config = zd.Config(
             headless=True,
             expert=True,
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) \
+            Chrome/120.0.0.0 Safari/537.36",
             browser_args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
@@ -85,7 +85,7 @@ class Scraper:
         domain.append(".sofascore.com")
 
         try:
-            tab = await self.browser.get(self.base_url)
+            await self.browser.get(self.base_url)
             # Don't wait for ready state - just a short sleep for cookies to be set
             await asyncio.sleep(6)
 
@@ -219,18 +219,16 @@ class Scraper:
         Returns:
             Parsed JSON response or None if request fails
         """
-        # Build cookie dict for httpx
-        cookie_dict = {}
         if use_cookies:
             if self.cookies is None and self.browser:
                 await self.generate_cookies()
 
         headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) \
+                Chrome/120.0.0.0 Safari/537.36",
             "Accept": "application/json",
             "Referer": self.base_url,
             "Accept-Language": "en-US,en;q=0.9",
-            "Referer": self.base_url,
             "Origin": self.base_url,
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",

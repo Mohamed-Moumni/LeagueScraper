@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 from app.api.routers.router import api_router
 
-
 app = FastAPI(title="LeagueScraper", version="1.0.0")
-
-# Include routers
 app.include_router(api_router, prefix="/api/v1")
+
 
 if __name__ == "__main__":
     import uvicorn

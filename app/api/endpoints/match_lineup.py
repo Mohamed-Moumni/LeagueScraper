@@ -1,12 +1,8 @@
-from typing import Any, Dict, List, Optional
-import logging
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field, ConfigDict
-from app.services.matches.match_scraper_service import MatchLineupScraper
-from fastapi import HTTPException, WebSocketException
 from app import logger
+from fastapi import APIRouter
+from fastapi import HTTPException
+from app.services.matches.match_scraper_service import MatchLineupScraper
 from app.api.models.match_lineup import MatchRequest, MatchResponse
-
 
 router = APIRouter()
 
@@ -42,7 +38,6 @@ async def match_lineup(request: MatchRequest):
                 detail=f"Match not found for teams: {request.team1} vs {request.team2}",
             )
 
-        # Get match lineup
         lineup_data = await scraper.get_match_lineup(event_id)
 
         if lineup_data is None:

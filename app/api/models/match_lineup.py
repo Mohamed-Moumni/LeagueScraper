@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, List, Optional, Any
 
-# Schema for the match request
+
 class MatchRequest(BaseModel):
     team1: str = Field(examples=["olympic-safi"])
     team2: str = Field(examples=["wydad-casablanca"])
@@ -40,13 +40,16 @@ class Player(BaseModel):
     proposedMarketValueRaw: Optional[MarketValue] = None
     fieldTranslations: Optional[FieldTranslations] = None
 
+
 class RatingVersions(BaseModel):
     original: Optional[float] = None
     alternative: Optional[float] = None
 
+
 class StatisticsType(BaseModel):
     sportSlug: Optional[str] = None
     statisticsType: Optional[str] = None
+
 
 class PlayerStatistics(BaseModel):
     totalPass: Optional[int] = None

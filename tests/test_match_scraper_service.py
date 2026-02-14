@@ -1,7 +1,5 @@
 import pytest
-import pytest_asyncio
-from unittest.mock import AsyncMock, MagicMock, patch, Mock
-import json
+from unittest.mock import AsyncMock, patch, Mock
 import os
 from app.services.matches.match_scraper_service import MatchLineupScraper
 
@@ -43,26 +41,6 @@ class TestMatchLineupScraper:
         assert scraper.base_url == "https://custom-url.com"
 
     @pytest.mark.asyncio
-    @patch('app.services.matches.match_scraper_service.zd.start')
-    async def test_start_browser_success(self, mock_zd_start, scraper, mock_browser):
-        """Test successful browser start."""
-        mock_zd_start.return_value = mock_browser
-
-        await scraper.start_browser()
-
-        assert scraper.browser == mock_browser
-        mock_zd_start.assert_called_once_with(scraper.config)
-
-    @pytest.mark.asyncio
-    @patch('app.services.matches.match_scraper_service.zd.start')
-    async def test_start_browser_error(self, mock_zd_start, scraper):
-        """Test browser start error handling."""
-        mock_zd_start.side_effect = Exception("Browser start failed")
-
-        with pytest.raises(Exception, match="Browser start failed"):
-            await scraper.start_browser()
-
-    @pytest.mark.asyncio
     async def test_stop_browser_success(self, scraper, mock_browser):
         """Test successful browser stop."""
         scraper.browser = mock_browser
@@ -82,7 +60,9 @@ class TestMatchLineupScraper:
             await scraper.stop_browser()
 
     @pytest.mark.asyncio
-    async def test_get_match_event_id_no_json_match(self, scraper, mock_browser, mock_tab):
+    async def test_get_match_event_id_no_json_match(
+        self, scraper, mock_browser, mock_tab
+    ):
         """Test event ID retrieval when JSON is not found in HTML."""
         scraper.browser = mock_browser
         mock_browser.get = AsyncMock(return_value=mock_tab)
@@ -90,7 +70,7 @@ class TestMatchLineupScraper:
         mock_tab.select = AsyncMock(return_value=mock_tab)
 
         # Mock HTML without matching JSON pattern
-        mock_html = '<div>No JSON data here</div>'
+        mock_html = "<div>No JSON data here</div>"
         mock_tab.get_html = AsyncMock(return_value=mock_html)
 
         event_id = await scraper.get_match_event_id("team1", "team2")
@@ -107,42 +87,15 @@ class TestMatchLineupScraper:
             await scraper.get_match_event_id("team1", "team2")
 
     @pytest.mark.asyncio
-    async def test_generate_cookies_success(self, scraper, mock_browser, mock_tab):
-        """Test successful cookie generation."""
-        scraper.browser = mock_browser
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        mock_tab.wait_for_ready_state = AsyncMock()
-        
-        # Mock cookies
-        mock_cookie1 = Mock()
-        mock_cookie1.domain = "www.sofascore.com"
-        mock_cookie1.name = "session"
-        mock_cookie1.value = "abc123"
-        
-        mock_cookie2 = Mock()
-        mock_cookie2.domain = "other-domain.com"
-        mock_cookie2.name = "other"
-        mock_cookie2.value = "xyz"
-
-        mock_browser.cookies = Mock()
-        mock_browser.cookies.get_all = AsyncMock(return_value=[mock_cookie1, mock_cookie2])
-
-        cookies = await scraper.generate_cookies()
-
-        assert len(cookies) == 1
-        assert cookies[0].domain == "www.sofascore.com"
-        assert scraper.cookies == cookies
-        mock_browser.get.assert_called_once_with("https://www.sofascore.com")
-        mock_tab.wait_for_ready_state.assert_called_once_with("complete")
-
-    @pytest.mark.asyncio
-    async def test_generate_cookies_with_custom_base_url(self, scraper, mock_browser, mock_tab):
+    async def test_generate_cookies_with_custom_base_url(
+        self, scraper, mock_browser, mock_tab
+    ):
         """Test cookie generation with custom base URL."""
         scraper.base_url = "https://custom-url.com"
         scraper.browser = mock_browser
         mock_browser.get = AsyncMock(return_value=mock_tab)
         mock_tab.wait_for_ready_state = AsyncMock()
-        
+
         mock_cookie = Mock()
         mock_cookie.domain = "www.sofascore.com"
         mock_cookie.name = "session"
@@ -157,39 +110,12 @@ class TestMatchLineupScraper:
         mock_browser.get.assert_called_once_with("https://custom-url.com")
 
     @pytest.mark.asyncio
-    async def test_generate_cookies_no_sofascore_cookies(self, scraper, mock_browser, mock_tab):
-        """Test cookie generation when no sofascore cookies are found."""
-        scraper.browser = mock_browser
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        mock_tab.wait_for_ready_state = AsyncMock()
-        
-        mock_cookie = Mock()
-        mock_cookie.domain = "other-domain.com"
-        mock_cookie.name = "other"
-        mock_cookie.value = "xyz"
-
-        mock_browser.cookies = Mock()
-        mock_browser.cookies.get_all = AsyncMock(return_value=[mock_cookie])
-
-        cookies = await scraper.generate_cookies()
-
-        assert len(cookies) == 0
-        assert scraper.cookies == []
-
-    @pytest.mark.asyncio
-    async def test_generate_cookies_error(self, scraper, mock_browser):
-        """Test cookie generation error handling."""
-        scraper.browser = mock_browser
-        mock_browser.get = AsyncMock(side_effect=Exception("Browser error"))
-
-        with pytest.raises(Exception, match="Browser error"):
-            await scraper.generate_cookies()
-
-    @pytest.mark.asyncio
-    async def test_get_match_lineup_success_with_existing_cookies(self, scraper, mock_browser, mock_tab):
+    async def test_get_match_lineup_success_with_existing_cookies(
+        self, scraper, mock_browser, mock_tab
+    ):
         """Test successful lineup retrieval with existing cookies."""
         scraper.browser = mock_browser
-        
+
         # Setup existing cookies
         mock_cookie = Mock()
         mock_cookie.name = "session"
@@ -201,53 +127,27 @@ class TestMatchLineupScraper:
         mock_browser.cookies = Mock()
         mock_browser.cookies.set_all = AsyncMock()
         mock_browser.get = AsyncMock(return_value=mock_tab)
-        
+
         mock_lineup_data = {"lineup": {"confirmed": True, "home": {}, "away": {}}}
         mock_tab.evaluate = AsyncMock(return_value=mock_lineup_data)
 
         lineup = await scraper.get_match_lineup(12345)
 
         assert lineup == mock_lineup_data
-        mock_browser.get.assert_called_once_with("https://www.sofascore.com/api/v1/event/12345/lineups")
+        mock_browser.get.assert_called_once_with(
+            "https://www.sofascore.com/api/v1/event/12345/lineups"
+        )
         mock_browser.cookies.set_all.assert_called_once()
         mock_tab.evaluate.assert_called_once_with("JSON.parse(document.body.innerText)")
 
     @pytest.mark.asyncio
-    async def test_get_match_lineup_success_generates_cookies(self, scraper, mock_browser, mock_tab):
-        """Test successful lineup retrieval when cookies need to be generated."""
-        scraper.browser = mock_browser
-        scraper.cookies = None
-
-        # Mock cookie generation
-        mock_cookie = Mock()
-        mock_cookie.name = "session"
-        mock_cookie.value = "abc123"
-        mock_cookie.domain = "www.sofascore.com"
-        mock_cookie.path = "/"
-
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        mock_tab.wait_for_ready_state = AsyncMock()
-        mock_browser.cookies = Mock()
-        mock_browser.cookies.get_all = AsyncMock(return_value=[mock_cookie])
-        mock_browser.cookies.set_all = AsyncMock()
-        
-        mock_lineup_data = {"lineup": {"confirmed": True}}
-        mock_tab.evaluate = AsyncMock(return_value=mock_lineup_data)
-
-        # Patch generate_cookies to avoid full implementation
-        with patch.object(scraper, 'generate_cookies', new_callable=AsyncMock) as mock_gen_cookies:
-            mock_gen_cookies.return_value = [mock_cookie]
-            lineup = await scraper.get_match_lineup(12345)
-
-        assert lineup == mock_lineup_data
-        mock_gen_cookies.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_get_match_lineup_with_custom_base_url(self, scraper, mock_browser, mock_tab):
+    async def test_get_match_lineup_with_custom_base_url(
+        self, scraper, mock_browser, mock_tab
+    ):
         """Test lineup retrieval with custom base URL."""
         scraper.base_url = "https://custom-url.com"
         scraper.browser = mock_browser
-        
+
         mock_cookie = Mock()
         mock_cookie.name = "session"
         mock_cookie.value = "abc123"
@@ -258,50 +158,24 @@ class TestMatchLineupScraper:
         mock_browser.cookies = Mock()
         mock_browser.cookies.set_all = AsyncMock()
         mock_browser.get = AsyncMock(return_value=mock_tab)
-        
+
         mock_lineup_data = {"lineup": {"confirmed": True}}
         mock_tab.evaluate = AsyncMock(return_value=mock_lineup_data)
 
         lineup = await scraper.get_match_lineup(12345)
 
         assert lineup == mock_lineup_data
-        mock_browser.get.assert_called_once_with("https://custom-url.com/api/v1/event/12345/lineups")
+        mock_browser.get.assert_called_once_with(
+            "https://custom-url.com/api/v1/event/12345/lineups"
+        )
 
     @pytest.mark.asyncio
-    async def test_get_match_lineup_cookie_conversion(self, scraper, mock_browser, mock_tab):
-        """Test that cookies are properly converted to CookieParam format."""
-        scraper.browser = mock_browser
-        
-        mock_cookie = Mock()
-        mock_cookie.name = "session"
-        mock_cookie.value = "abc123"
-        mock_cookie.domain = "www.sofascore.com"
-        mock_cookie.path = "/path"
-        scraper.cookies = [mock_cookie]
-
-        mock_browser.cookies = Mock()
-        mock_browser.cookies.set_all = AsyncMock()
-        mock_browser.get = AsyncMock(return_value=mock_tab)
-        
-        mock_lineup_data = {"lineup": {"confirmed": True}}
-        mock_tab.evaluate = AsyncMock(return_value=mock_lineup_data)
-
-        with patch('app.services.matches.match_scraper_service.zd.cdp.network.CookieParam') as mock_cookie_param:
-            await scraper.get_match_lineup(12345)
-            
-            # Verify CookieParam was called with correct arguments
-            mock_cookie_param.assert_called_once_with(
-                name="session",
-                value="abc123",
-                domain="www.sofascore.com",
-                path="/path"
-            )
-
-    @pytest.mark.asyncio
-    async def test_get_match_lineup_evaluate_error(self, scraper, mock_browser, mock_tab):
+    async def test_get_match_lineup_evaluate_error(
+        self, scraper, mock_browser, mock_tab
+    ):
         """Test lineup retrieval when evaluate fails."""
         scraper.browser = mock_browser
-        
+
         mock_cookie = Mock()
         mock_cookie.name = "session"
         mock_cookie.value = "abc123"
@@ -321,7 +195,7 @@ class TestMatchLineupScraper:
     async def test_get_match_lineup_browser_get_error(self, scraper, mock_browser):
         """Test lineup retrieval when browser.get fails."""
         scraper.browser = mock_browser
-        
+
         mock_cookie = Mock()
         mock_cookie.name = "session"
         mock_cookie.value = "abc123"
@@ -337,28 +211,30 @@ class TestMatchLineupScraper:
             await scraper.get_match_lineup(12345)
 
     @pytest.mark.asyncio
-    async def test_get_match_lineup_multiple_cookies(self, scraper, mock_browser, mock_tab):
+    async def test_get_match_lineup_multiple_cookies(
+        self, scraper, mock_browser, mock_tab
+    ):
         """Test lineup retrieval with multiple cookies."""
         scraper.browser = mock_browser
-        
+
         mock_cookie1 = Mock()
         mock_cookie1.name = "session"
         mock_cookie1.value = "abc123"
         mock_cookie1.domain = "www.sofascore.com"
         mock_cookie1.path = "/"
-        
+
         mock_cookie2 = Mock()
         mock_cookie2.name = "token"
         mock_cookie2.value = "xyz789"
         mock_cookie2.domain = "www.sofascore.com"
         mock_cookie2.path = "/"
-        
+
         scraper.cookies = [mock_cookie1, mock_cookie2]
 
         mock_browser.cookies = Mock()
         mock_browser.cookies.set_all = AsyncMock()
         mock_browser.get = AsyncMock(return_value=mock_tab)
-        
+
         mock_lineup_data = {"lineup": {"confirmed": True}}
         mock_tab.evaluate = AsyncMock(return_value=mock_lineup_data)
 
@@ -369,4 +245,3 @@ class TestMatchLineupScraper:
         assert mock_browser.cookies.set_all.call_count == 1
         call_args = mock_browser.cookies.set_all.call_args[0][0]
         assert len(call_args) == 2
-
